@@ -1,0 +1,17 @@
+body {
+    background-color: <?php echo $background_color; ?>;
+    font-family: <?php echo $font_family; ?>;
+    font-size: <?php echo $font_size; ?>;
+}
+main { display: flex; flex-direction: column; }
+#contenido { margin-top: 1rem; }
+#barraSuperior { justify-content: flex-start; align-items: center; flex-wrap: wrap; }
+.btn-categoria, .btn-asignatura {
+    min-width: 120px;
+    text-align: center;
+    margin: 0.25rem;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    height: 38px;
+}
