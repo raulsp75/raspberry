@@ -2,36 +2,27 @@
 // Inicialización de variables
 $salida = $titulo = "";
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    if (isset($_POST["reiniciarRaspberry"])) {
-        // Código para reiniciar la Raspberry Pi...
-        $titulo = "Reinicio del sistema";
-        $salida = "Iniciando reinicio del sistema...";
-        // Comentado por seguridad: shell_exec("sudo reboot");
-    }
-} else {
-    // Información predeterminada
-    $titulo = "Panel de Control del Sistema";
-    
-    // Obtener información del sistema
-    $hostname = shell_exec("hostname");
-    $uptime = shell_exec("uptime");
-    $date = shell_exec("date");
-    $temp = shell_exec("vcgencmd measure_temp");
-    $memory = shell_exec("free -h");
-    $cpu_usage = shell_exec("top -bn1 | grep 'Cpu(s)' | sed 's/.*, *\\([0-9.]*\\)%* id.*/\\1/' | awk '{print 100 - $1\"%\"}'");
-    
-    // Variable para guardar el estado
-    $system_status = "normal";
-    
-    // Determinar el estado del sistema basado en la temperatura
-    if (preg_match('/temp=([0-9.]+)/', $temp, $matches)) {
-        $temperature = floatval($matches[1]);
-        if ($temperature > 70) {
-            $system_status = "critical";
-        } else if ($temperature > 60) {
-            $system_status = "warning";
-        }
+// Información predeterminada
+$titulo = "Panel de Control del Sistema";
+
+// Obtener información del sistema
+$hostname = shell_exec("hostname");
+$uptime = shell_exec("uptime");
+$date = shell_exec("date");
+$temp = shell_exec("vcgencmd measure_temp");
+$memory = shell_exec("free -h");
+$cpu_usage = shell_exec("top -bn1 | grep 'Cpu(s)' | sed 's/.*, *\\([0-9.]*\\)%* id.*/\\1/' | awk '{print 100 - $1\"%\"}'");
+
+// Variable para guardar el estado
+$system_status = "normal";
+
+// Determinar el estado del sistema basado en la temperatura
+if (preg_match('/temp=([0-9.]+)/', $temp, $matches)) {
+    $temperature = floatval($matches[1]);
+    if ($temperature > 70) {
+        $system_status = "critical";
+    } else if ($temperature > 60) {
+        $system_status = "warning";
     }
 }
 
@@ -197,36 +188,6 @@ if (file_exists('header.php')) {
             color: #666;
         }
         
-        .actions-panel {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 30px;
-        }
-        
-        .restart-button {
-            width: 200px;
-            height: 45px;
-            background-color: #e74c3c;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .restart-button:hover {
-            background-color: #c0392b;
-        }
-        
-        .restart-button i {
-            margin-right: 8px;
-        }
-        
         .output-panel {
             background-color: #f9f9f9;
             border-radius: 8px;
@@ -273,10 +234,6 @@ if (file_exists('header.php')) {
             color: #777;
         }
         
-        form {
-            margin: 0;
-        }
-        
         @media (max-width: 768px) {
             .dashboard {
                 grid-template-columns: repeat(2, 1fr);
@@ -297,80 +254,69 @@ if (file_exists('header.php')) {
         </div>
         
         <div class="content-area">
-            <?php if ($_SERVER["REQUEST_METHOD"] != "POST"): ?>
-                
-                <div class="system-status status-<?php echo $system_status; ?>">
-                    <div class="status-icon-large icon-<?php echo $system_status; ?>">
-                        <?php if ($system_status == 'normal'): ?>
-                            <i class="fas fa-check-circle"></i>
-                        <?php elseif ($system_status == 'warning'): ?>
-                            <i class="fas fa-exclamation-triangle"></i>
-                        <?php else: ?>
-                            <i class="fas fa-exclamation-circle"></i>
-                        <?php endif; ?>
-                    </div>
-                    <div class="status-message">
-                        <h3 class="status-title">
-                            <?php 
-                                if ($system_status == 'normal') echo "Sistema funcionando correctamente";
-                                elseif ($system_status == 'warning') echo "Advertencia: Temperatura elevada";
-                                else echo "¡Alerta! Temperatura crítica";
-                            ?>
-                        </h3>
-                        <p class="status-description">
-                            <?php 
-                                if ($system_status == 'normal') echo "Todos los parámetros están dentro de los valores normales.";
-                                elseif ($system_status == 'warning') echo "La temperatura del sistema está por encima de lo recomendado. Considere mejorar la ventilación.";
-                                else echo "¡La temperatura es peligrosamente alta! Apague el sistema para evitar daños.";
-                            ?>
-                        </p>
-                    </div>
+            <div class="system-status status-<?php echo $system_status; ?>">
+                <div class="status-icon-large icon-<?php echo $system_status; ?>">
+                    <?php if ($system_status == 'normal'): ?>
+                        <i class="fas fa-check-circle"></i>
+                    <?php elseif ($system_status == 'warning'): ?>
+                        <i class="fas fa-exclamation-triangle"></i>
+                    <?php else: ?>
+                        <i class="fas fa-exclamation-circle"></i>
+                    <?php endif; ?>
                 </div>
-                
-                <div class="dashboard">
-                    <div class="metric-card">
-                        <div class="metric-icon">
-                            <i class="fas fa-microchip"></i>
-                        </div>
-                        <div class="metric-value"><?php echo trim($cpu_usage); ?></div>
-                        <div class="metric-label">USO DE CPU</div>
-                    </div>
-                    
-                    <div class="metric-card">
-                        <div class="metric-icon">
-                            <i class="fas fa-thermometer-half"></i>
-                        </div>
-                        <div class="metric-value"><?php echo trim(str_replace("temp=", "", $temp)); ?></div>
-                        <div class="metric-label">TEMPERATURA</div>
-                        <div class="temperature-status">
-                            <div class="status-icon">
-                                <i class="fas fa-check"></i>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="metric-card">
-                        <div class="metric-icon">
-                            <i class="fas fa-memory"></i>
-                        </div>
-                        <div class="metric-value">
-                            <?php 
-                                preg_match('/Mem:.+?(\d+[GMK])/', $memory, $matches);
-                                echo isset($matches[1]) ? $matches[1] : "N/A"; 
-                            ?>
-                        </div>
-                        <div class="metric-label">MEMORIA USADA</div>
-                    </div>
+                <div class="status-message">
+                    <h3 class="status-title">
+                        <?php 
+                            if ($system_status == 'normal') echo "Sistema funcionando correctamente";
+                            elseif ($system_status == 'warning') echo "Advertencia: Temperatura elevada";
+                            else echo "¡Alerta! Temperatura crítica";
+                        ?>
+                    </h3>
+                    <p class="status-description">
+                        <?php 
+                            if ($system_status == 'normal') echo "Todos los parámetros están dentro de los valores normales.";
+                            elseif ($system_status == 'warning') echo "La temperatura del sistema está por encima de lo recomendado. Considere mejorar la ventilación.";
+                            else echo "¡La temperatura es peligrosamente alta! Apague el sistema para evitar daños.";
+                        ?>
+                    </p>
                 </div>
-            <?php endif; ?>
+            </div>
             
-            <form method="post" action="">
-                <div class="actions-panel">
-                    <button type="submit" name="reiniciarRaspberry" class="restart-button" onclick="return confirm('¿Estás seguro de que deseas reiniciar el sistema?');">
-                        <i class="fas fa-power-off"></i> Reiniciar Sistema
-                    </button>
+            <div class="dashboard">
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i class="fas fa-microchip"></i>
+                    </div>
+                    <div class="metric-value"><?php echo trim($cpu_usage); ?></div>
+                    <div class="metric-label">USO DE CPU</div>
                 </div>
-            </form>
+                
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i class="fas fa-thermometer-half"></i>
+                    </div>
+                    <div class="metric-value"><?php echo trim(str_replace("temp=", "", $temp)); ?></div>
+                    <div class="metric-label">TEMPERATURA</div>
+                    <div class="temperature-status">
+                        <div class="status-icon">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i class="fas fa-memory"></i>
+                    </div>
+                    <div class="metric-value">
+                        <?php 
+                            preg_match('/Mem:.+?(\d+[GMK])/', $memory, $matches);
+                            echo isset($matches[1]) ? $matches[1] : "N/A"; 
+                        ?>
+                    </div>
+                    <div class="metric-label">MEMORIA USADA</div>
+                </div>
+            </div>
             
             <?php if (!empty($salida)): ?>
                 <div class="output-panel">

@@ -38,6 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     $_SESSION['user'] = $user;
     $_SESSION['user_id'] = $userAccount['id'];
+    $_SESSION['rol'] = $userAccount['rol'];
     header("Location: principal.php");
     exit();
 }

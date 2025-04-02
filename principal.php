@@ -2,6 +2,12 @@
 session_start();
 if (!isset($_SESSION['user'])) { header("Location: login.php"); exit(); }
 
+// Comprobar si el usuario es administrador
+$es_admin = false;
+if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'admin') {
+    $es_admin = true;
+}
+
 // Get cookie preferences
 $background_color = $_COOKIE['background_color'] ?? '#f8f9fa';
 $font_size = $_COOKIE['font_size'] ?? '1rem';
@@ -47,9 +53,13 @@ $inactivity_time = (int)($_COOKIE['inactivity_time'] ?? 15);
                 <a href="#" class="nav-link text-dark menu-item" data-section="foro">Foro</a>
                 <a href="#" class="nav-link text-dark menu-item" data-section="guia">Guia Pringles</a>
                 <a href="#" class="nav-link text-dark menu-item" data-section="configuracion">Configuración</a>
+                <?php if ($es_admin): ?>
+                <a href="#" class="nav-link text-dark menu-item" data-section="admin">Administrador</a>
+                <?php endif; ?>
                 <a href="login.php" class="nav-link text-danger">Cerrar sesión</a>
             </nav>
         </aside>
+
 
         <main class="flex-grow-1 p-4">
             <div id="barraSuperior" class="bg-white p-3 rounded shadow" style="display: none;"></div>
@@ -121,7 +131,7 @@ $inactivity_time = (int)($_COOKIE['inactivity_time'] ?? 15);
                         `).show();
                         $("#contenido").html("<p>Selecciona un minijuego</p>");
                         break;
-		    case "asir":
+                    case "asir":
                         $("#barraSuperior").append(`
                             <button class="btn btn-outline-secondary btn-categoria" data-pagina="fondo.php">IDP</button>
                             <button class="btn btn-outline-secondary btn-categoria" data-pagina="letra.php">Letra</button>
@@ -129,14 +139,14 @@ $inactivity_time = (int)($_COOKIE['inactivity_time'] ?? 15);
                         `).show();
                         $("#contenido").html("<p>Selecciona una opción de configuración</p>");
                         break;
-		    case "guia":
+                    case "guia":
                         $("#barraSuperior").append(`
                             <button class="btn btn-outline-secondary btn-categoria" data-pagina="materiales.php">Materiales</button>
                             <button class="btn btn-outline-secondary btn-categoria" data-pagina="documentacion.php">Documentación</button>
                             <button class="btn btn-outline-secondary btn-categoria" data-pagina="fotos.php">Fotos</button>
                         `).show();
                         $("#contenido").html("<p>Selecciona la información a la que quieras acceder</p>");
-			break;
+                        break;
                     case "configuracion":
                         $("#barraSuperior").append(`
                             <button class="btn btn-outline-secondary btn-categoria" data-pagina="fondo.php">Fondo</button>
@@ -144,16 +154,16 @@ $inactivity_time = (int)($_COOKIE['inactivity_time'] ?? 15);
                             <button class="btn btn-outline-secondary btn-categoria" data-pagina="inactividad.php">Inactividad</button>
                         `).show();
                         $("#contenido").html("<p>Selecciona una opción de configuración</p>");
-			break;
+                        break;
                     case "foro":
                         $("#barraSuperior").append(`
                             <button class="btn btn-outline-secondary btn-categoria" data-pagina="foro.php">Foro</button>
-                            <button class="btn btn-outline-secondary btn-categoria" data-pagina="letra.php">Letra</button>
-                            <button class="btn btn-outline-secondary btn-categoria" data-pagina="inactividad.php">Inactividad</button>
                         `).show();
-                        $("#contenido").html("<p>Selecciona una opción de configuración</p>");
+                        $("#contenido").html("<p>Selecciona una opción del foro</p>");
                         break;
-
+		   case "admin":
+                        window.location.href = 'admin.php';
+    		        return;
                     default:
                         $("#barraSuperior").hide();
                         $("#contenido").html("<p>Selecciona una opción del menú</p>");
@@ -273,7 +283,12 @@ $inactivity_time = (int)($_COOKIE['inactivity_time'] ?? 15);
             // Restaurar sección guardada
             let savedSection = sessionStorage.getItem("currentSection");
             if (savedSection) {
-                $(`.menu-item[data-section="${savedSection}"]`).click();
+                // Si la sección guardada es "admin" pero el usuario no es admin, no restaurarla
+                if (savedSection === "admin" && !<?php echo $es_admin ? 'true' : 'false'; ?>) {
+                    sessionStorage.removeItem("currentSection");
+                } else {
+                    $(`.menu-item[data-section="${savedSection}"]`).click();
+                }
             }
             
             // Control de inactividad

@@ -1,6 +1,10 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 session_start();
-require_once 'config/database.php'; // Archivo de conexión a la BD
+require_once 'config/database.php';
 
 // Verificar que el usuario ha iniciado sesión
 if (!isset($_SESSION['user_id'])) {
@@ -8,23 +12,35 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-// Procesar el envío de un nuevo mensaje
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['message']) && !empty($_POST['message'])) {
-    $user_id = $_SESSION['user_id'];
-    $username = $_SESSION['nombre_usuario']; // Cambiado a nombre_usuario según tu BD
-    $message = htmlspecialchars($_POST['message']);
-    
-    $stmt = $pdo->prepare("INSERT INTO forum_messages (user_id, username, message) VALUES (?, ?, ?)");
-    $stmt->execute([$user_id, $username, $message]);
+// Actualizar la actividad del usuario
+try {
+    $stmt = $pdo->prepare("UPDATE usuarios SET last_activity = NOW() WHERE id = ?");
+    $stmt->execute([$_SESSION['user_id']]);
+} catch (PDOException $e) {
+    // Error silencioso
 }
 
-// Obtener todos los mensajes
-$stmt = $pdo->query("SELECT * FROM forum_messages ORDER BY created_at DESC LIMIT 100");
-$messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-// Obtener usuarios activos (últimos 5 minutos)
-$stmt = $pdo->query("SELECT DISTINCT nombre_usuario FROM usuarios WHERE last_activity > DATE_SUB(NOW(), INTERVAL 5 MINUTE)");
-$activeUsers = $stmt->fetchAll(PDO::FETCH_COLUMN);
+// Lista de foros disponibles - puedes modificar esto según tus necesidades
+$foros = [
+    [
+        'id' => 'general',
+        'nombre' => 'Foro General',
+        'descripcion' => 'Discusión general sobre cualquier tema relacionado con el proyecto',
+        'icono' => '📢'
+    ],
+    [
+        'id' => 'ASIR',
+        'nombre' => 'ASIR',
+        'descripcion' => 'Dudas que puedan tener a lo largo del curso',
+        'icono' => '🖥️ '
+    ],
+    [
+        'id' => 'sugerencias',
+        'nombre' => 'Sugerencias',
+        'descripcion' => 'Propuestas de mejora y nuevas ideas para el proyecto',
+        'icono' => '💡'
+    ],
+];
 ?>
 
 <!DOCTYPE html>
@@ -32,121 +48,116 @@ $activeUsers = $stmt->fetchAll(PDO::FETCH_COLUMN);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Foro - Proyecto Antena Pringles</title>
+    <title>Foros - Proyecto Antena Pringles</title>
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
-        .forum-container {
+        .forums-container {
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
         }
-        .message {
+        .forum-card {
             background-color: #f9f9f9;
             border-radius: 8px;
-            padding: 10px;
-            margin-bottom: 15px;
-        }
-        .message-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        .message-content {
-            padding: 5px 0;
-        }
-        .active-users {
-            background-color: #e8f5e9;
-            padding: 10px;
-            border-radius: 8px;
+            padding: 15px;
             margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
         }
-        .user-badge {
+        .forum-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .forum-icon {
+            font-size: 2.5rem;
+            margin-right: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 60px;
+        }
+        .forum-info {
+            flex-grow: 1;
+        }
+        .forum-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #2e7d32;
+        }
+        .forum-description {
+            color: #555;
+            font-size: 0.9rem;
+        }
+        .page-title {
+            color: #2e7d32;
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .breadcrumb {
+            background-color: #f5f5f5;
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+        .breadcrumb a {
+            color: #2e7d32;
+            text-decoration: none;
+        }
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+        .back-button {
             display: inline-block;
             background-color: #4caf50;
             color: white;
-            padding: 3px 8px;
-            border-radius: 12px;
-            margin: 2px;
-            font-size: 0.8em;
-        }
-        .message-form {
-            margin-top: 20px;
-        }
-        .message-input {
-            width: 100%;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #ddd;
-            min-height: 80px;
-            margin-bottom: 10px;
-        }
-        .submit-btn {
-            background-color: #4caf50;
-            color: white;
-            border: none;
-            padding: 10px 15px;
+            padding: 10px 20px;
             border-radius: 4px;
-            cursor: pointer;
+            text-decoration: none;
+            margin-top: 20px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .back-button:hover {
+            background-color: #388e3c;
+        }
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            border-top: 1px solid #e0e0e0;
+            padding-top: 20px;
         }
     </style>
 </head>
 <body>
-    <div class="forum-container">
-        <h1>Foro de Usuarios</h1>
-        
-        <div class="active-users">
-            <h3>Usuarios activos</h3>
-            <?php foreach ($activeUsers as $user): ?>
-                <span class="user-badge"><?php echo $user; ?></span>
-            <?php endforeach; ?>
+    <div class="forums-container">
+        <div class="breadcrumb">
+            <a href="principal.php">Inicio</a> &gt; Foros
         </div>
         
-        <form class="message-form" method="POST" action="">
-            <textarea class="message-input" name="message" placeholder="Escribe tu mensaje aquí..."></textarea>
-            <button type="submit" class="submit-btn">Enviar mensaje</button>
-        </form>
+        <h1 class="page-title">Foros de Discusión</h1>
         
-        <h2>Mensajes recientes</h2>
-        <?php if (empty($messages)): ?>
-            <p>No hay mensajes todavía. ¡Sé el primero en escribir!</p>
-        <?php else: ?>
-            <?php foreach ($messages as $message): ?>
-                <div class="message">
-                    <div class="message-header">
-                        <span><?php echo $message['username']; ?></span>
-                        <span><?php echo date('d/m/Y H:i', strtotime($message['created_at'])); ?></span>
-                    </div>
-                    <div class="message-content">
-                        <?php echo $message['message']; ?>
-                    </div>
+        <?php foreach ($foros as $foro): ?>
+            <a href="foro_<?php echo $foro['id']; ?>.php" class="forum-card">
+                <div class="forum-icon"><?php echo $foro['icono']; ?></div>
+                <div class="forum-info">
+                    <div class="forum-title"><?php echo htmlspecialchars($foro['nombre']); ?></div>
+                    <div class="forum-description"><?php echo htmlspecialchars($foro['descripcion']); ?></div>
                 </div>
-            <?php endforeach; ?>
-        <?php endif; ?>
-    </div>
-    
-    <script>
-        // Script para actualizar la página cada 30 segundos para ver nuevos mensajes
-        setTimeout(function() {
-            location.reload();
-        }, 30000);
+            </a>
+        <?php endforeach; ?>
         
-        // Actualizar el último tiempo de actividad del usuario
-        fetch('update_activity.php', {
-            method: 'POST'
-        });
-    </script>
+        <div class="button-container">
+            <a href="principal.php" class="back-button">Volver al menú principal</a>
+        </div>
+    </div>
 </body>
 </html>
-
-
-// update_activity.php - Script para actualizar la actividad del usuario
-<?php
-session_start();
-require_once 'config/database.php';
-
-if (isset($_SESSION['user_id'])) {
-    $stmt = $pdo->prepare("UPDATE usuarios SET last_activity = NOW() WHERE id = ?");
-    $stmt->execute([$_SESSION['user_id']]);
-}
-?>
