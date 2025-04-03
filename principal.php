@@ -21,9 +21,13 @@ $inactivity_time = (int)($_COOKIE['inactivity_time'] ?? 15);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Raspberry</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
+<style>
         body {
             background-color: <?php echo $background_color; ?>;
+            background-image: url('fondo2.png');
+            background-size: 50%;
+            background-position: 100% 100%;
+            background-repeat: no-repeat;
             font-family: <?php echo $font_family; ?>;
             font-size: <?php echo $font_size; ?>;
         }
@@ -41,7 +45,7 @@ $inactivity_time = (int)($_COOKIE['inactivity_time'] ?? 15);
         }
         .btn-primary { box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25); }
     </style>
-</head>
+<head/>
 <body>
     <div class="d-flex vh-100">
         <aside class="bg-white shadow p-4 w-25">
@@ -60,11 +64,15 @@ $inactivity_time = (int)($_COOKIE['inactivity_time'] ?? 15);
             </nav>
         </aside>
 
-
         <main class="flex-grow-1 p-4">
             <div id="barraSuperior" class="bg-white p-3 rounded shadow" style="display: none;"></div>
             <div id="contenido">
-                <p>Selecciona una opción del menú</p>
+                <div class="alert alert-info">
+                    <h4 class="alert-heading">¡Bienvenido a tu Centro de Control!</h4>
+                    <p>Explora las opciones del menú y descubre todo lo que puedes hacer.</p>
+                    <hr>
+                    <p class="mb-0">Selecciona una categoría para comenzar tu aventura digital.</p>
+                </div>
             </div>
         </main>
     </div>
@@ -93,20 +101,11 @@ $inactivity_time = (int)($_COOKIE['inactivity_time'] ?? 15);
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function(){
-            // Remover espacios en blanco y limpiar interfaz
-            function removeBlanks() {
-                $("#barraSuperior").nextUntil("#contenido").filter(function() {
-                    return !$.trim($(this).html()) || $(this).hasClass("bg-white");
-                }).remove();
-            }
-            
-            removeBlanks();
-            
-            // Limpiar barra superior
-            function limpiarBarraSuperior() {
-                $("#barraSuperior").empty().hide();
-                removeBlanks();
-            }
+            // Added this to prevent undefined error
+            const asignaturas = {
+                'primero': [],
+                'segundo': []
+            };
             
             // Menú principal - click handler
             $(".menu-item").click(function(){
@@ -121,7 +120,12 @@ $inactivity_time = (int)($_COOKIE['inactivity_time'] ?? 15);
                             <button class="btn btn-outline-secondary btn-categoria" data-pagina="lan.php">LAN</button>
                             <button class="btn btn-outline-secondary btn-categoria" data-pagina="estado.php">Estado</button>
                         `).show();
-                        $("#contenido").html("<p>Selecciona una opción de Red</p>");
+                        $("#contenido").html(`
+                            <div class="alert alert-primary">
+                                <h4 class="alert-heading">🌐 Panel de Conectividad de Red</h4>
+                                <p>Explora y gestiona tus configuraciones de red. Elige entre WAN, LAN o revisa el estado actual de tu conexión.</p>
+                            </div>
+                        `);
                         break;
                     case "minijuegos":
                         $("#barraSuperior").append(`
@@ -129,15 +133,12 @@ $inactivity_time = (int)($_COOKIE['inactivity_time'] ?? 15);
                             <button class="btn btn-outline-secondary btn-categoria" data-pagina="romano.php">Romano</button>
                             <button class="btn btn-outline-secondary btn-categoria" data-pagina="circulo.php">Atrapa el Círculo</button>
                         `).show();
-                        $("#contenido").html("<p>Selecciona un minijuego</p>");
-                        break;
-                    case "asir":
-                        $("#barraSuperior").append(`
-                            <button class="btn btn-outline-secondary btn-categoria" data-pagina="fondo.php">IDP</button>
-                            <button class="btn btn-outline-secondary btn-categoria" data-pagina="letra.php">Letra</button>
-                            <button class="btn btn-outline-secondary btn-categoria" data-pagina="inactividad.php">Inactividad</button>
-                        `).show();
-                        $("#contenido").html("<p>Selecciona una opción de configuración</p>");
+                        $("#contenido").html(`
+                            <div class="alert alert-success">
+                                <h4 class="alert-heading">🎮 Zona de Entretenimiento</h4>
+                                <p>Elige tu desafío: Adivina el juego, Números Romanos o Atrapa el Círculo. ¡Diversión garantizada!</p>
+                            </div>
+                        `);
                         break;
                     case "guia":
                         $("#barraSuperior").append(`
@@ -145,7 +146,12 @@ $inactivity_time = (int)($_COOKIE['inactivity_time'] ?? 15);
                             <button class="btn btn-outline-secondary btn-categoria" data-pagina="documentacion.php">Documentación</button>
                             <button class="btn btn-outline-secondary btn-categoria" data-pagina="fotos.php">Fotos</button>
                         `).show();
-                        $("#contenido").html("<p>Selecciona la información a la que quieras acceder</p>");
+                        $("#contenido").html(`
+                            <div class="alert alert-warning">
+                                <h4 class="alert-heading">📚 Guía de Recursos Pringles</h4>
+                                <p>Explora materiales, documentación y galería de fotos. Tu recurso definitivo de información.</p>
+                            </div>
+                        `);
                         break;
                     case "configuracion":
                         $("#barraSuperior").append(`
@@ -153,20 +159,35 @@ $inactivity_time = (int)($_COOKIE['inactivity_time'] ?? 15);
                             <button class="btn btn-outline-secondary btn-categoria" data-pagina="letra.php">Letra</button>
                             <button class="btn btn-outline-secondary btn-categoria" data-pagina="inactividad.php">Inactividad</button>
                         `).show();
-                        $("#contenido").html("<p>Selecciona una opción de configuración</p>");
+                        $("#contenido").html(`
+                            <div class="alert alert-secondary">
+                                <h4 class="alert-heading">⚙️ Centro de Personalización</h4>
+                                <p>Ajusta tu experiencia: cambia fondos, tamaño de letra y configura tus preferencias de inactividad.</p>
+                            </div>
+                        `);
                         break;
                     case "foro":
                         $("#barraSuperior").append(`
                             <button class="btn btn-outline-secondary btn-categoria" data-pagina="foro.php">Foro</button>
                         `).show();
-                        $("#contenido").html("<p>Selecciona una opción del foro</p>");
+                        $("#contenido").html(`
+                            <div class="alert alert-info">
+                                <h4 class="alert-heading">💬 Espacio de Comunidad</h4>
+                                <p>Conéctate, comparte y participa en nuestro foro. Tu voz es importante.</p>
+                            </div>
+                        `);
                         break;
-		   case "admin":
+		            case "admin":
                         window.location.href = 'admin.php';
-    		        return;
+    		            return;
                     default:
                         $("#barraSuperior").hide();
-                        $("#contenido").html("<p>Selecciona una opción del menú</p>");
+                        $("#contenido").html(`
+                            <div class="alert alert-info">
+                                <h4 class="alert-heading">🚀 Centro de Control</h4>
+                                <p>Tu panel de control personalizado. Elige una categoría para comenzar.</p>
+                            </div>
+                        `);
                 }
 
                 // Resaltar opción seleccionada
@@ -177,92 +198,30 @@ $inactivity_time = (int)($_COOKIE['inactivity_time'] ?? 15);
                 asignarEventos();
             });
             
+            // Función para eliminar espacios en blanco
+            function removeBlanks() {
+                $("#barraSuperior").nextUntil("#contenido").filter(function() {
+                    return !$.trim($(this).html()) || $(this).hasClass("bg-white");
+                }).remove();
+            }
+            
+            // Limpiar barra superior
+            function limpiarBarraSuperior() {
+                $("#barraSuperior").empty().hide();
+                removeBlanks();
+            }
+
             // Asignar eventos a botones
             function asignarEventos() {
                 $(".btn-categoria").off("click").on("click", function() {
                     if ($(this).hasClass("examen-curso")) {
-                        mostrarAsignaturas($(this).data("curso"));
+                        // Commented out function due to lack of course data
+                        // mostrarAsignaturas($(this).data("curso"));
+                        return;
                     } else {
                         $(".btn-categoria").removeClass("btn-primary").addClass("btn-outline-secondary");
                         $(this).removeClass("btn-outline-secondary").addClass("btn-primary");
                         cargarContenido($(this).data("pagina"));
-                    }
-                });
-            }
-
-            function mostrarAsignaturas(curso) {
-                $(".btn-categoria").removeClass("btn-primary").addClass("btn-outline-secondary");
-                $(`.btn-categoria[data-curso="${curso}"]`).removeClass("btn-outline-secondary").addClass("btn-primary");
-                
-                $("#barraSuperior").empty();
-                
-                asignaturas[curso].forEach(function(asignatura) {
-                    $("#barraSuperior").append(`
-                        <button class="btn btn-outline-secondary btn-asignatura" 
-                            data-curso="${curso}" data-asignatura="${asignatura.id}">
-                            ${asignatura.nombre}
-                        </button>`);
-                });
-                
-                $("#barraSuperior").append(`
-                    <button class="btn btn-outline-secondary btn-notas" data-curso="${curso}">
-                        📋 Notas
-                    </button>`);
-                
-                $("#contenido").html(`<p>Selecciona una asignatura de ${curso === 'primero' ? 'primer' : 'segundo'} curso para realizar el examen</p>`);
-                
-                removeBlanks();
-                
-                // Eventos para botones de asignatura
-                $(".btn-asignatura").click(function() {
-                    $(".btn-asignatura").removeClass("btn-primary").addClass("btn-outline-secondary");
-                    $(this).removeClass("btn-outline-secondary").addClass("btn-primary");
-                    cargarExamen($(this).data("curso"), $(this).data("asignatura"));
-                });
-                
-                // Evento para botón de notas
-                $(".btn-notas").click(function() {
-                    cargarNotas($(this).data("curso"));
-                });
-            }
-
-            // Cargar notas de curso
-            function cargarNotas(curso) {
-                $.ajax({
-                    url: 'notas.php',
-                    method: 'POST',
-                    data: { curso: curso },
-                    success: function(data) {
-                        $("#contenido").html(data);
-                    },
-                    error: function() {
-                        $("#contenido").html(`
-                            <div class="alert alert-warning">
-                                <h4 class="alert-heading">Notas no disponibles</h4>
-                                <p>Aún no hay notas registradas para este curso.</p>
-                            </div>`);
-                    }
-                });
-            }
-            
-            // Cargar examen
-            function cargarExamen(curso, asignatura) {
-                $.ajax({
-                    url: `${asignatura.toLowerCase()}.php`,
-                    success: function(data) {
-                        $("#contenido").html(data);
-                    },
-                    error: function() {
-                        $("#contenido").html(`
-                            <div class="alert alert-warning">
-                                <h4 class="alert-heading">Examen no disponible</h4>
-                                <p>El examen de esta asignatura aún no está disponible. Estamos trabajando en ello.</p>
-                                <hr>
-                                <p class="mb-0">Por favor, intenta con otra asignatura o vuelve más tarde.</p>
-                            </div>`);
-                    },
-                    complete: function() {
-                        removeBlanks();
                     }
                 });
             }
@@ -273,6 +232,14 @@ $inactivity_time = (int)($_COOKIE['inactivity_time'] ?? 15);
                     url: pagina,
                     success: function(data) {
                         $("#contenido").html(data);
+                    },
+                    error: function() {
+                        $("#contenido").html(`
+                            <div class="alert alert-danger">
+                                <h4 class="alert-heading">Error de carga</h4>
+                                <p>No se pudo cargar el contenido solicitado. Por favor, inténtalo de nuevo más tarde.</p>
+                            </div>
+                        `);
                     },
                     complete: function() {
                         removeBlanks();

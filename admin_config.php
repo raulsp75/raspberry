@@ -1,4 +1,4 @@
-<?php 
+<?php
 session_start();
 
 // Verificar si el usuario está logueado y es administrador
@@ -18,18 +18,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $tipo_mensaje = "warning";
         shell_exec("sudo reboot");
     }
-    
-    if (isset($_POST['limpiarCache'])) {
-        shell_exec("sudo rm -rf /tmp/cache/*");
-        $mensaje = "Caché del sistema limpiada correctamente.";
-        $tipo_mensaje = "success";
-    }
-    
+
+if (isset($_POST['limpiarCache'])) {
+    shell_exec("sudo sync &&
+               sudo echo 3 > /proc/sys/vm/drop_caches &&
+               sudo rm -rf /tmp/cache/* &&
+               sudo apt-get clean");
+
+    $mensaje = "Caché del sistema limpiada correctamente.";
+    $tipo_mensaje = "success";
+}
     if (isset($_POST['backupDB'])) {
         if (!file_exists('backups')) {
             mkdir('backups', 0755, true);
         }
-        
+
         $fecha = date('Y-m-d_H-i-s');
         $nombre_backup = "backups/backup_db_$fecha.sql";
         $return_var = 0;
@@ -49,9 +52,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $tipo_mensaje = "danger";
         }
     }
-    
+
     if (isset($_POST['updateSystem'])) {
-        shell_exec("sudo apt update && sudo apt upgrade -y");
+	shell_exec("sudo /usr/bin/apt update && sudo /usr/bin/apt upgrade -y");
         $mensaje = "Sistema actualizado correctamente.";
         $tipo_mensaje = "success";
     }
